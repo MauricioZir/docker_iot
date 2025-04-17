@@ -1,8 +1,9 @@
 import asyncio, ssl, certifi, logging, os
 import aiomqtt
 
+
 logging.basicConfig(
-    format='%(asctime)s - cliente mqtt - %(levelname)s - [%(funcName)s] %(message)s',
+    format='%(asctime)s - cliente mqtt - %(levelname)s - [%(name)s][%(funcName)s] %(message)s',
     level=logging.INFO,
     datefmt='%d/%m/%Y %H:%M:%S %z'
 )
@@ -21,7 +22,6 @@ async def publicar(client, topic, contador_ref):
         await asyncio.sleep(5)
 
 
-
 async def topic_1_handler(topico_1_queue):
     while True:
         message = await topico_1_queue.get()
@@ -32,7 +32,6 @@ async def topic_2_handler(topico_2_queue):
     while True:
         message = await topico_2_queue.get()
         logging.info(str(message.topic) + ": " + message.payload.decode("utf-8"))
-
 
 
 async def recibir(client, topico_1, topico_2, queue_1, queue_2):
@@ -53,8 +52,6 @@ async def main():
     tls_context.load_default_certs()
 
     contador_ref = [0]
-
-    # Crear las colas dentro de main
     queue_1 = asyncio.Queue()
     queue_2 = asyncio.Queue()
 
@@ -62,7 +59,6 @@ async def main():
     topico_1 = os.environ['TOPICO_1']
     topico_2 = os.environ['TOPICO_2']
     topico_pub = os.environ['TOPICO_PUB']
-
 
     async with aiomqtt.Client(
         servidor,
@@ -73,14 +69,12 @@ async def main():
         await client.subscribe(topico_1)
         await client.subscribe(topico_2)
 
-        # Crear tasks dentro del contexto del cliente
         async with asyncio.TaskGroup() as tg:
             tg.create_task(recibir(client, topico_1, topico_2, queue_1, queue_2))
             tg.create_task(topic_1_handler(queue_1))
             tg.create_task(topic_2_handler(queue_2))
             tg.create_task(contador(contador_ref))
             tg.create_task(publicar(client, topico_pub, contador_ref))
-
 
 
 if __name__ == "__main__":
