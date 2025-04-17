@@ -34,15 +34,16 @@ async def topic_2_handler(topico_2_queue):
         logging.info(str(message.topic) + ": " + message.payload.decode("utf-8"))
 
 
+
 async def recibir(client, topico_1, topico_2, queue_1, queue_2):
-    async for message in client.messages:
-        if message.topic.matches(topico_1):
-            queue_1.put_nowait(message)
-        elif message.topic.matches(topico_2):
-            queue_2.put_nowait(message)
-
-
-
+    try:
+        async for message in client.messages:
+            if message.topic.matches(topico_1):
+                queue_1.put_nowait(message)
+            elif message.topic.matches(topico_2):
+                queue_2.put_nowait(message)
+    except MqttError as e:
+        logging.error(f"Error en recibir(): {e}")
 
 
 async def main():
@@ -69,17 +70,16 @@ async def main():
         tls_context=tls_context,
     ) as client:
 
-        await client.subscribe([(topico_1, 0), (topico_2, 0)])
-        await client.subscribe([(topico_1, 0), (topico_2, 0)])
+        await client.subscribe(topico_1)
+        await client.subscribe(topico_2)
 
         # Crear tasks dentro del contexto del cliente
-        tareas = [
-            asyncio.create_task(recibir(client, topico_1, topico_2, queue_1, queue_2)),
-            asyncio.create_task(topic_1_handler(queue_1)),
-            asyncio.create_task(topic_2_handler(queue_2)),
-            asyncio.create_task(contador(contador_ref)),
-            asyncio.create_task(publicar(client, topico_pub, contador_ref))
-        ]
+        async with asyncio.TaskGroup() as tg:
+            tg.create_task(recibir(client, topico_1, topico_2, queue_1, queue_2))
+            tg.create_task(topic_1_handler(queue_1))
+            tg.create_task(topic_2_handler(queue_2))
+            tg.create_task(contador(contador_ref))
+            tg.create_task(publicar(client, topico_pub, contador_ref))
 
 
 
