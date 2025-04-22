@@ -3,7 +3,7 @@ import aiomqtt
 
 
 logging.basicConfig(
-    format='%(asctime)s - cliente mqtt - %(levelname)s - [%(name)s][%(funcName)s] %(message)s',
+    format='%(asctime)s - cliente mqtt - %(levelname)s - [%(funcName)s] %(message)s',
     level=logging.INFO,
     datefmt='%d/%m/%Y %H:%M:%S %z'
 )
