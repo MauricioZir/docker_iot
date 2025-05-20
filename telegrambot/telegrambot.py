@@ -3,6 +3,8 @@ from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandl
 import logging, os, asyncio, aiomysql, traceback, locale
 import matplotlib.pyplot as plt
 from io import BytesIO
+import ssl, certifi, json
+import aiomqtt
 
 token=os.environ["TB_TOKEN"]
 
@@ -77,14 +79,45 @@ async def button_handler(update: Update, context):
         )
 
 
-def main():
-    application = Application.builder().token(token).build()
-    application.add_handler(CommandHandler('start', start))
-    application.add_handler(CommandHandler('about', acercade))
+async def main():
 
-    application.add_handler(CommandHandler('setpoint', update_setpoint))
-    application.add_handler(MessageHandler(filters.Regex("^(Destello|Relé|Modo)$"), button_handler))
-    application.run_polling()
+    # Configurar TLS
+    tls_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    tls_context.verify_mode = ssl.CERT_REQUIRED
+    tls_context.check_hostname = True
+    tls_context.load_default_certs()
 
-if __name__ == '__main__':
-    main()
+    # Crear cliente MQTT
+    async with aiomqtt.Client(
+        os.environ["SERVIDOR"],
+        username=os.environ["MQTT_USR"],
+        password=os.environ["MQTT_PASS"],
+        port=int(os.environ["PUERTO_MQTTS"]),
+        tls_context=tls_context,
+    ) as client:
+
+        # Crear bot Telegram
+        application = Application.builder().token(token).build()
+
+        # Guardar cliente MQTT para usar en handlers
+        application.bot_data["mqtt_client"] = client
+
+        # Agregar handler
+        application.add_handler(CommandHandler('start', start))
+        application.add_handler(CommandHandler('about', acercade))
+        application.add_handler(CommandHandler('setpoint', update_setpoint))
+        application.add_handler(MessageHandler(filters.Regex("^(Destello|Relé|Modo)$"), button_handler))
+
+        async with application:  # Inicializar la aplicación
+                await application.start()
+                await application.updater.start_polling()
+
+                # Espera indefinida hasta que se cancele manualmente
+                await asyncio.Event().wait()
+
+                await application.updater.stop()
+                await application.stop()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
