@@ -67,6 +67,12 @@ async def button_handler(update: Update, context):
             chat_id=update.message.chat.id,
             text="🔌 Activando el relé"
         )
+
+
+        client = context.application.bot_data["mqtt_client"]
+        await client.publish("/test", "se apreto el boton de rele desde telegram")
+
+
     elif mensaje == "Modo":
         await context.bot.send_message(
             chat_id=update.message.chat.id,
@@ -94,7 +100,7 @@ async def main():
 
     # Crear cliente MQTT
     async with aiomqtt.Client(
-        os.environ["SERVIDOR"],
+        os.environ["DOMINIO"],
         username=os.environ["MQTT_USR"],
         password=os.environ["MQTT_PASS"],
         port=int(os.environ["PUERTO_MQTTS"]),

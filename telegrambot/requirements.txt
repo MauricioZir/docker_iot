@@ -4,4 +4,3 @@ matplotlib
 aiomqtt
 certifi
 environs
-aiomysql
