@@ -79,6 +79,10 @@ async def button_handler(update: Update, context):
         )
 
 
+
+
+
+
 async def main():
 
     # Configurar TLS
@@ -86,6 +90,7 @@ async def main():
     tls_context.verify_mode = ssl.CERT_REQUIRED
     tls_context.check_hostname = True
     tls_context.load_default_certs()
+
 
     # Crear cliente MQTT
     async with aiomqtt.Client(
@@ -98,25 +103,28 @@ async def main():
 
         # Crear bot Telegram
         application = Application.builder().token(token).build()
-
-        # Guardar cliente MQTT para usar en handlers
-        application.bot_data["mqtt_client"] = client
-
         # Agregar handler
         application.add_handler(CommandHandler('start', start))
         application.add_handler(CommandHandler('about', acercade))
         application.add_handler(CommandHandler('setpoint', update_setpoint))
         application.add_handler(MessageHandler(filters.Regex("^(Destello|Relé|Modo)$"), button_handler))
 
-        async with application:  # Inicializar la aplicación
-                await application.start()
-                await application.updater.start_polling()
+        # Guardar cliente MQTT para usar en handlers
+        application.bot_data["mqtt_client"] = client
 
-                # Espera indefinida hasta que se cancele manualmente
-                await asyncio.Event().wait()
-
-                await application.updater.stop()
-                await application.stop()
+        # Inicializar la aplicación Telegram
+        async with application:  # Calls `initialize` and `shutdown`
+            await application.start()
+            await application.updater.start_polling()
+            # Start other asyncio frameworks here
+            # Add some logic that keeps the event loop running until you want to shutdown
+            while True:
+                try:
+                    await asyncio.sleep(1)
+                except Exception: 
+            # Stop the other asyncio frameworks here
+                    await application.updater.stop()
+                    await application.stop()
 
 
 if __name__ == "__main__":
