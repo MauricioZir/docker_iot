@@ -6,8 +6,6 @@ from io import BytesIO
 import ssl, certifi, json
 import aiomqtt
 
-token=os.environ["TB_TOKEN"]
-
 logging.basicConfig(format='%(asctime)s - TelegramBot - %(levelname)s - %(message)s', level=logging.INFO)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -20,7 +18,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         apellido=update.message.from_user.last_name
     else:
         apellido=""
-    kb = [["Destello"],["Modo"],["Relé"]]
+    kb = [["Destello"],["Relé"]]
     await context.bot.send_message(update.message.chat.id, text="Bienvenido al Bot "+ nombre + " " + apellido,reply_markup=ReplyKeyboardMarkup(kb))
 
 async def acercade(update: Update, context):
@@ -38,59 +36,112 @@ async def update_setpoint(update: Update, context):
 
     # Verifica si el setpoint es un número.
     try:
-        setpoint = float(context.args[0])
+        setpoint = int(context.args[0])
     except ValueError:
         await context.bot.send_message(
             chat_id=update.message.chat.id,
             text="⚠️ El valor del setpoint debe ser un número válido."
         )
         return
-
+      
     # Si existe y es número, continúa con el resto
+    client = context.application.bot_data["mqtt_client"]
+    await client.publish("/TBot/setpoint", str(setpoint))
+    
     await context.bot.send_message(
         chat_id=update.message.chat.id,
-        text=f"✅ Cambiando SetPoint a {setpoint} °C."
+        text=f"✅ Cambiando Setpoint a {setpoint} °C."
     )
 
 
+async def update_periodo(update: Update, context):
+    # Verifica si se paso el periodo como parámetro.
+    if not context.args:
+        await context.bot.send_message(
+            chat_id=update.message.chat.id,
+            text="⚠️ Falta indicar el valor del periodo."
+        )
+        return
+
+    # Verifica si el periodo es un número.
+    try:
+        periodo = int(context.args[0])
+    except ValueError:
+        await context.bot.send_message(
+            chat_id=update.message.chat.id,
+            text="⚠️ El valor del periodo debe ser un número válido."
+        )
+        return
+      
+    # Si existe y es número, continúa con el resto
+    client = context.application.bot_data["mqtt_client"]
+    await client.publish("/TBot/periodo", str(periodo))
+    
+    await context.bot.send_message(
+        chat_id=update.message.chat.id,
+        text=f"✅ Cambiando Periodo a {periodo}."
+    )
+
+
+async def update_modo(update: Update, context):
+    # Verifica si se pasó el modo como parámetro.
+    if not context.args:
+        await context.bot.send_message(
+            chat_id=update.message.chat.id,
+            text="⚠️ Falta indicar el modo (man o auto)."
+        )
+        return
+
+    # Obtiene el modo como string (en minúsculas, sin espacios)
+    modo = context.args[0].lower().strip()
+
+    # Validar que el modo sea uno de los esperados
+    if modo not in ["man", "auto"]:
+        await context.bot.send_message(
+            chat_id=update.message.chat.id,
+            text="⚠️ Modo inválido. Usá 'man' o 'auto'."
+        )
+        return
+
+    # Publicar el modo en MQTT
+    client = context.application.bot_data["mqtt_client"]
+    await client.publish("/TBot/modo", modo)
+    await context.bot.send_message(
+        chat_id=update.message.chat.id,
+        text=f"✅ Modo cambiado a '{modo}'."
+    )
+
+
+#Maneja los botones
 async def button_handler(update: Update, context):
     mensaje = update.message.text
     logging.info(f"Mensaje recibido: {mensaje}")
 
+    client = context.application.bot_data["mqtt_client"]
+
     if mensaje == "Destello":
+        await client.publish("/TBot/destello", "destello")
         await context.bot.send_message(
             chat_id=update.message.chat.id,
-            text="⚡ Se destellaaaaaaaaa"
+            text="⚡ Destellando."
         )
     elif mensaje == "Relé":
+        await client.publish("/TBot/rele", "rele")
         await context.bot.send_message(
             chat_id=update.message.chat.id,
-            text="🔌 Activando el relé"
-        )
-
-
-        client = context.application.bot_data["mqtt_client"]
-        await client.publish("/test", "se apreto el boton de rele desde telegram")
-
-
-    elif mensaje == "Modo":
-        await context.bot.send_message(
-            chat_id=update.message.chat.id,
-            text="🔄 Cambiando de modo"
+            text="🔌 Activando el relé."
         )
     else:
         await context.bot.send_message(
             chat_id=update.message.chat.id,
-            text="❓ Comando desconocido"
+            text="❓ Comando desconocido."
         )
-
-
-
-
 
 
 async def main():
 
+    token=os.environ["TB_TOKEN"]
+    
     # Configurar TLS
     tls_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     tls_context.verify_mode = ssl.CERT_REQUIRED
@@ -113,22 +164,22 @@ async def main():
         application.add_handler(CommandHandler('start', start))
         application.add_handler(CommandHandler('about', acercade))
         application.add_handler(CommandHandler('setpoint', update_setpoint))
-        application.add_handler(MessageHandler(filters.Regex("^(Destello|Relé|Modo)$"), button_handler))
+        application.add_handler(CommandHandler('periodo', update_periodo))
+        application.add_handler(CommandHandler('modo', update_modo))
+        application.add_handler(MessageHandler(filters.Regex("^(Destello|Relé)$"), button_handler))
 
         # Guardar cliente MQTT para usar en handlers
         application.bot_data["mqtt_client"] = client
 
         # Inicializar la aplicación Telegram
-        async with application:  # Calls `initialize` and `shutdown`
+        async with application:
             await application.start()
             await application.updater.start_polling()
-            # Start other asyncio frameworks here
-            # Add some logic that keeps the event loop running until you want to shutdown
+
             while True:
                 try:
                     await asyncio.sleep(1)
                 except Exception: 
-            # Stop the other asyncio frameworks here
                     await application.updater.stop()
                     await application.stop()
 
