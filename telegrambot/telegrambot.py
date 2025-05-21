@@ -1,9 +1,7 @@
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
-import logging, os, asyncio, aiomysql, traceback, locale
-import matplotlib.pyplot as plt
-from io import BytesIO
-import ssl, certifi, json
+import logging, os, asyncio
+import ssl, certifi
 import aiomqtt
 
 logging.basicConfig(format='%(asctime)s - TelegramBot - %(levelname)s - %(message)s', level=logging.INFO)
