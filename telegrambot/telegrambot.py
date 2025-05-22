@@ -44,7 +44,7 @@ async def update_setpoint(update: Update, context):
       
     # Si existe y es número, continúa con el resto
     client = context.application.bot_data["mqtt_client"]
-    await client.publish("/TBot/setpoint", str(setpoint))
+    await client.publish("30ECBEC0444CCC05/setpoint", str(setpoint))
     
     await context.bot.send_message(
         chat_id=update.message.chat.id,
@@ -73,7 +73,7 @@ async def update_periodo(update: Update, context):
       
     # Si existe y es número, continúa con el resto
     client = context.application.bot_data["mqtt_client"]
-    await client.publish("/TBot/periodo", str(periodo))
+    await client.publish("30ECBEC0444CCC05/periodo", str(periodo))
     
     await context.bot.send_message(
         chat_id=update.message.chat.id,
@@ -103,7 +103,7 @@ async def update_modo(update: Update, context):
 
     # Publicar el modo en MQTT
     client = context.application.bot_data["mqtt_client"]
-    await client.publish("/TBot/modo", modo)
+    await client.publish("30ECBEC0444CCC05/modo", modo)
     await context.bot.send_message(
         chat_id=update.message.chat.id,
         text=f"✅ Modo cambiado a '{modo}'."
@@ -118,13 +118,13 @@ async def button_handler(update: Update, context):
     client = context.application.bot_data["mqtt_client"]
 
     if mensaje == "Destello":
-        await client.publish("/TBot/destello", "destello")
+        await client.publish("30ECBEC0444CCC05/destello", "destello")
         await context.bot.send_message(
             chat_id=update.message.chat.id,
             text="⚡ Destellando."
         )
     elif mensaje == "Relé":
-        await client.publish("/TBot/rele", "rele")
+        await client.publish("30ECBEC0444CCC05/rele", "rele")
         await context.bot.send_message(
             chat_id=update.message.chat.id,
             text="🔌 Activando el relé."
