@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <title>FLASK CRUD 1.6</title>
   <!-- <link rel="stylesheet" href="https://bootswatch.com/5/cosmo/bootstrap.min.css"> -->
-  <link rel="stylesheet" href="https://bootswatch.com/5/cyborg/bootstrap.min.css">
+  <link id="theme-style" rel="stylesheet" href="">
   {% with messages = get_flashed_messages() %} {% if messages %}
   {% for message in messages %}
   <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -17,6 +17,10 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
     <div class="container-fluid">
       <a class="navbar-brand" href="#">CRUD</a>
+
+      <!-- Botón para cambar de tema -->
+      <button id="toggle-theme" class="btn btn-light ms-auto me-2">Cambiar Tema</button>
+
       {% if session.get("user_id") %}
       <div class="d-flex">
         <div class="nav-item pe-3 pt-2">{{ session.get("user_id") }}</div>
@@ -38,5 +42,8 @@
           crossorigin="anonymous"></script>
 
   <script src="{{url_for('static', filename='js/main.js')}}"></script>
+
+  <script src="{{url_for('static', filename='js/tema.js')}}"></script>
+
 </body>
 </html>

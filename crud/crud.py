@@ -38,18 +38,18 @@ def registrar():
 
         # Ensure username was submitted
         if not request.form.get("usuario"):
-            return "el campo usuario es oblicatorio"
+            return "El campo usuario es obligatorio."
 
         # Ensure password was submitted
         elif not request.form.get("password"):
-            return "el campo contraseña es oblicatorio"
+            return "El campo usuario es obligatorio."
 
         passhash=generate_password_hash(request.form.get("password"), method='scrypt', salt_length=16)
         cur = mysql.connection.cursor()
         cur.execute("INSERT INTO usuarios (usuario, hash) VALUES (%s,%s)", (request.form.get("usuario"), passhash[17:]))
         if mysql.connection.affected_rows():
             flash('Se agregó un usuario')  # usa sesión
-            logging.info("se agregó un usuario")
+            logging.info("Se agregó un usuario")
         mysql.connection.commit()
         return redirect(url_for('index'))
 
@@ -60,10 +60,10 @@ def login():
     if request.method == "POST":
         # Ensure username was submitted
         if not request.form.get("usuario"):
-            return "el campo usuario es oblicatorio"
+            return "El campo usuario es obligatorio."
         # Ensure password was submitted
         elif not request.form.get("password"):
-            return "el campo contraseña es oblicatorio"
+            return "El campo usuario es obligatorio."
 
         cur = mysql.connection.cursor()
         cur.execute("SELECT * FROM usuarios WHERE usuario LIKE %s", (request.form.get("usuario"),))
@@ -75,7 +75,7 @@ def login():
                 logging.info("se autenticó correctamente")
                 return redirect(url_for('index'))
             else:
-                flash('usuario o contraseña incorrecto')
+                flash('Usuario o contraseña incorrecto')
                 return redirect(url_for('login'))
     return render_template('login.html')
 
