@@ -18,13 +18,16 @@
     <div class="container-fluid">
       <a class="navbar-brand" href="#">CRUD</a>
 
-      <!-- Botón para cambar de tema -->
-      <button id="toggle-theme" class="btn btn-light ms-auto me-2">Cambiar Tema</button>
-
       {% if session.get("user_id") %}
       <div class="d-flex">
-        <div class="nav-item pe-3 pt-2">{{ session.get("user_id") }}</div>
-        <a href="{{url_for('logout')}}" class="btn btn-secondary my-2 my-sm-0" type="submit">Salir</a>
+        <div class="nav-item pe-3">{{ session.get("user_id") }}</div>
+
+        <select id="theme-select" class="form-select form-select-sm me-3">
+          <option value="flatly">Tema Claro</option>
+          <option value="darkly">Tema Oscuro</option>
+        </select>
+
+        <a href="{{url_for('logout')}}" class="btn btn-secondary btn-sm" type="submit">Salir</a>
       </div>
       {% endif %}
     </div>
