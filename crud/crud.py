@@ -4,6 +4,10 @@ import os, logging
 from functools import wraps
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
+import asyncio
+import ssl, certifi
+import aiomqtt
+
 
 logging.basicConfig(format='%(asctime)s - CRUD - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -145,3 +149,52 @@ def logout():
     session.clear()
     logging.info("el usuario {} cerró su sesión".format(session.get("user_id")))
     return redirect(url_for('index'))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@app.route('/destello', methods=['POST'])
+@require_login
+async def publicar_destello(client):
+    destello = "destello"
+    await client.publish("30ECBEC0444CCC05/destello", modo)
+
+
+
+
+async def main():
+
+    # Configurar TLS
+    tls_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    tls_context.verify_mode = ssl.CERT_REQUIRED
+    tls_context.check_hostname = True
+    tls_context.load_default_certs()
+
+    # Crear cliente MQTT
+    async with aiomqtt.Client(
+        os.environ["DOMINIO"],
+        username=os.environ["MQTT_USR"],
+        password=os.environ["MQTT_PASS"],
+        port=int(os.environ["PUERTO_MQTTS"]),
+        tls_context=tls_context,
+    ) as client:
+        async with asyncio.TaskGroup() as tg:
+            tg.create_task(publicar_destello(client))
+            #tg.create_task(setpoint(client))
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
