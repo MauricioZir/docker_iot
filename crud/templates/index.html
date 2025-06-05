@@ -12,7 +12,6 @@
 </div>
 
 
-
 <div class="row">
   <div class="col-md-7 mx-auto">
     <div class="card card-body">
@@ -53,7 +52,6 @@
 </div>
 
 
-
 <div class="row pt-5">
   <div class="col-md-10 mx-auto">
     <h3 class="mb-4">Lista de Nodos</h3>
@@ -71,14 +69,14 @@
       <tbody>
         {% for nodo in nodos %}
         <tr>
-          <td>{{ nodo[0] }}</td>
-          <td>{{ nodo[1] }}</td>
-          <td>{{ nodo[2] }}</td>
-          <td>{{ nodo[3] }}</td>
-          <td>{{ nodo[5] }}</td>
+          <td>{{ nodo.0 }}</td>
+          <td>{{ nodo.1 }}</td>
+          <td>{{ nodo.2 }}</td>
+          <td>{{ nodo.3 }}</td>
+          <td>{{ nodo.5 }}</td>
           <td>
-            <a href="{{ url_for('editar_nodo', id=nodo[0]) }}" class="btn btn-secondary btn-sm">Editar</a>
-            <a href="{{ url_for('borrar_nodo', id=nodo[0]) }}" class="btn btn-danger btn-sm btn-borrar">Borrar</a>
+            <a href="{{ url_for('editar_nodo', id=nodo.0) }}" class="btn btn-secondary btn-sm">Editar</a>
+            <a href="{{ url_for('borrar_nodo', id=nodo.0) }}" class="btn btn-danger btn-sm btn-borrar">Borrar</a>
           </td>
         </tr>
         {% endfor %}
@@ -86,8 +84,6 @@
     </table>
   </div>
 </div>
-
-
 
 
 {% endblock %}
