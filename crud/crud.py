@@ -4,10 +4,6 @@ import os, logging
 from functools import wraps
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
-import asyncio
-import ssl, certifi
-import aiomqtt
-
 
 logging.basicConfig(format='%(asctime)s - CRUD - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -59,6 +55,7 @@ def registrar():
 
     return render_template('registrar.html')
 
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -83,65 +80,89 @@ def login():
                 return redirect(url_for('login'))
     return render_template('login.html')
 
+
 @app.route('/')
 @require_login
 def index():
     cur = mysql.connection.cursor()
-    cur.execute('SELECT * FROM contactos')
-    datos = cur.fetchall()
+    cur.execute("SELECT * FROM nodos")
+    nodos = cur.fetchall()
     cur.close()
-    return render_template('index.html', contactos = datos)
+    return render_template('index.html', nodos = nodos)
 
-@app.route('/add_contact', methods=['POST'])
+
+@app.route('/add_nodo', methods=['POST'])
 @require_login
-def add_contact():
+def add_nodo():
     if request.method == 'POST':
-        nombre = request.form['nombre']
-        tel = request.form['tel']
-        email = request.form['email']
+        nodo = request.form['nodo']
+        servidor = request.form['servidor']
+        mqtt_usr = request.form['mqtt_usr']
+        mqtt_pass = request.form['mqtt_pass']
+        mqtt_puerto = request.form['mqtt_puerto']
+
+        # Cifrar la contraseña con scrypt y eliminar el prefijo
+        passhash = generate_password_hash(mqtt_pass, method='scrypt', salt_length=16)[17:]
+
         cur = mysql.connection.cursor()
-        cur.execute("INSERT INTO contactos (nombre, tel, email) VALUES (%s,%s,%s)"
-                    , (nombre, tel, email))
+        cur.execute("""
+            INSERT INTO nodos (nodo, servidor, mqtt_usr, mqtt_pass, mqtt_puerto)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (nodo, servidor, mqtt_usr, passhash, mqtt_puerto))
+
         if mysql.connection.affected_rows():
-            flash('Se agregó un contacto')  # usa sesión
-            logging.info("se agregó un contacto")
+            flash('Se agregó un nodo')
+            logging.info("Se agregó un nodo")
             mysql.connection.commit()
     return redirect(url_for('index'))
 
-@app.route('/borrar/<string:id>', methods = ['GET'])
+
+@app.route('/borrar_nodo/<string:id>', methods=['GET'])
 @require_login
-def borrar_contacto(id):
+def borrar_nodo(id):
     cur = mysql.connection.cursor()
-    cur.execute('DELETE FROM contactos WHERE id = {0}'.format(id))
+    cur.execute('DELETE FROM nodos WHERE id = %s', (id,))
     if mysql.connection.affected_rows():
-        flash('Se eliminó un contacto')  # usa sesión
-        logging.info("se eliminó un contacto")
+        flash('Se eliminó un nodo')
+        logging.info("Se eliminó un nodo")
         mysql.connection.commit()
     return redirect(url_for('index'))
 
-@app.route('/editar/<id>', methods = ['GET'])
+
+@app.route('/editar_nodo/<id>', methods=['GET'])
 @require_login
-def conseguir_contacto(id):
+def conseguir_nodo(id):
     cur = mysql.connection.cursor()
-    cur.execute('SELECT * FROM contactos WHERE id = %s', (id,))
+    cur.execute('SELECT * FROM nodos WHERE id = %s', (id,))
     datos = cur.fetchone()
     logging.info(datos)
-    return render_template('editar-contacto.html', contacto = datos)
+    return render_template('editar-nodo.html', nodo=datos)
 
-@app.route('/actualizar/<id>', methods=['POST'])
+@app.route('/actualizar_nodo/<id>', methods=['POST'])
 @require_login
-def actualizar_contacto(id):
+def actualizar_nodo(id):
     if request.method == 'POST':
-        nombre = request.form['nombre']
-        tel = request.form['tel']
-        email = request.form['email']
+        nodo = request.form['nodo']
+        servidor = request.form['servidor']
+        mqtt_usr = request.form['mqtt_usr']
+        mqtt_pass = request.form['mqtt_pass']
+        mqtt_puerto = request.form['mqtt_puerto']
+
+        # Cifrar nueva contraseña
+        passhash = generate_password_hash(mqtt_pass, method='scrypt', salt_length=16)[17:]
+
         cur = mysql.connection.cursor()
-        cur.execute("UPDATE contactos SET nombre=%s, tel=%s, email=%s WHERE id=%s", (nombre, tel, email, id))
+        cur.execute("""
+            UPDATE nodos
+            SET nodo=%s, servidor=%s, mqtt_usr=%s, mqtt_pass=%s, mqtt_puerto=%s
+            WHERE id=%s
+        """, (nodo, servidor, mqtt_usr, passhash, mqtt_puerto, id))
     if mysql.connection.affected_rows():
-        flash('Se actualizó un contacto')  # usa sesión
-        logging.info("se actualizó un contacto")
+        flash('Se actualizó el nodo')
+        logging.info("Se actualizó el nodo")
         mysql.connection.commit()
     return redirect(url_for('index'))
+
 
 @app.route("/logout")
 @require_login

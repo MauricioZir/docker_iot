@@ -1,51 +1,84 @@
 {% extends "layout.html" %}
 {% block body %}
-<div class="row">
+
+<div class="row pt-5 ">
   <div class="col-md-7 mx-auto">
     <div class="card card-body">
-      <form action="{{url_for('add_contact')}}" method="POST">
-        <legend>Cargar contacto</legend>
-        <div class="form-group">
-          <label class="col-form-label mt-4" for="inputDefault">Nombre completo</label>
-          <input type="text" class="form-control" id="inputDefault" data-ddg-inputtype="unknown" name="nombre">
-        </div>
-        <div class="form-group">
-          <label class="col-form-label mt-4" for="tel">Teléfono</label>
-          <input type="tel" class="form-control" id="tel" data-ddg-inputtype="unknown" name="tel">
-        </div>
-        <div class="form-group">
-          <label for="email" class="form-label mt-4">Email</label>
-          <input type="email" name="email" class="form-control" id="email" aria-describedby="emailHelp"
-            data-ddg-inputtype="identities.emailAddress" data-ddg-autofill="true">
-          <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
-        </div>
-        <button type="submit" class="btn btn-primary mt-4">guardar</button>
-      </form>
+
+
+      
     </div>
   </div>
 </div>
-<div class="row pt-5 ">
+
+
+
+<div class="row">
   <div class="col-md-7 mx-auto">
-    <table class="table table-hover table-default">
+    <div class="card card-body">
+
+    <form action="{{ url_for('add_nodo') }}" method="POST">
+      <legend>Agregar Nodo</legend>
+
+      <div class="form-group">
+        <label class="col-form-label mt-4" for="nodo">Nombre del Nodo</label>
+        <input type="text" class="form-control" id="nodo" name="nodo" required>
+      </div>
+
+      <div class="form-group">
+        <label class="col-form-label mt-4" for="servidor">Servidor MQTT</label>
+        <input type="text" class="form-control" id="servidor" name="servidor" required>
+      </div>
+
+      <div class="form-group">
+        <label class="col-form-label mt-4" for="mqtt_usr">Usuario MQTT</label>
+        <input type="text" class="form-control" id="mqtt_usr" name="mqtt_usr" required>
+      </div>
+
+      <div class="form-group">
+        <label class="col-form-label mt-4" for="mqtt_pass">Contraseña MQTT</label>
+        <input type="password" class="form-control" id="mqtt_pass" name="mqtt_pass" required>
+      </div>
+
+      <div class="form-group">
+        <label class="col-form-label mt-4" for="mqtt_puerto">Puerto MQTT</label>
+        <input type="number" class="form-control" id="mqtt_puerto" name="mqtt_puerto" min="1" max="65535" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary mt-4">Guardar</button>
+    </form>
+      
+    </div>
+  </div>
+</div>
+
+
+
+<div class="row pt-5">
+  <div class="col-md-10 mx-auto">
+    <h3 class="mb-4">Lista de Nodos</h3>
+    <table class="table table-hover">
       <thead>
         <tr>
           <th scope="col">ID</th>
-          <th scope="col">Nombre completo</th>
-          <th scope="col">Teléfono</th>
-          <th scope="col">Email</th>
-          <th scope="col">acción</th>
+          <th scope="col">Nombre del Nodo</th>
+          <th scope="col">Servidor</th>
+          <th scope="col">Usuario MQTT</th>
+          <th scope="col">Puerto</th>
+          <th scope="col">Acción</th>
         </tr>
       </thead>
       <tbody>
-        {% for contacto in contactos %}
+        {% for nodo in nodos %}
         <tr>
-          <td>{{contacto.0}}</td>
-          <td>{{contacto.1}}</td>
-          <td>{{contacto.2}}</td>
-          <td>{{contacto.3}}</td>
+          <td>{{ nodo[0] }}</td>
+          <td>{{ nodo[1] }}</td>
+          <td>{{ nodo[2] }}</td>
+          <td>{{ nodo[3] }}</td>
+          <td>{{ nodo[5] }}</td>
           <td>
-            <a href="{{url_for('conseguir_contacto',id=contacto.0)}}" class="btn btn-secondary">editar</a>
-            <a href="{{url_for('borrar_contacto',id=contacto.0)}}" class="btn btn-danger btn-borrar">borrar</a>
+            <a href="{{ url_for('editar_nodo', id=nodo[0]) }}" class="btn btn-secondary btn-sm">Editar</a>
+            <a href="{{ url_for('borrar_nodo', id=nodo[0]) }}" class="btn btn-danger btn-sm btn-borrar">Borrar</a>
           </td>
         </tr>
         {% endfor %}
@@ -53,4 +86,8 @@
     </table>
   </div>
 </div>
+
+
+
+
 {% endblock %}
