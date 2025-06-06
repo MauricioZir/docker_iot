@@ -4,6 +4,7 @@ import os, logging
 from functools import wraps
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
+from cryptography.fernet import Fernet
 
 logging.basicConfig(format='%(asctime)s - CRUD - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -91,6 +92,8 @@ def index():
     return render_template('index.html', nodos = datos)
 
 
+
+
 @app.route('/add_nodo', methods=['POST'])
 @require_login
 def add_nodo():
@@ -101,21 +104,24 @@ def add_nodo():
         mqtt_pass = request.form['mqtt_pass']
         mqtt_puerto = request.form['mqtt_puerto']
 
-        # Cifrar la contraseña con scrypt y eliminar el prefijo
-        passhash = generate_password_hash(mqtt_pass, method='scrypt', salt_length=16)[17:]
+        # Cargar la clave Fernet, deberia de cargar desde el env
+        fernet_key = 'nZlKUqDCMQs0yK7sYpAz6GgJY0YkBeuI_dBLVgl9-Vw='
+        # Crear instancia de Fernet
+        fernet = Fernet(fernet_key.encode())
+        # Cifrar la contraseña
+        encrypted_pass = fernet.encrypt(mqtt_pass.encode()).decode()
 
         cur = mysql.connection.cursor()
         cur.execute("""
             INSERT INTO nodos (nodo, servidor, mqtt_usr, mqtt_pass, mqtt_puerto)
             VALUES (%s, %s, %s, %s, %s)
-        """, (nodo, servidor, mqtt_usr, passhash, mqtt_puerto))
+        """, (nodo, servidor, mqtt_usr, encrypted_pass, mqtt_puerto))
 
         if mysql.connection.affected_rows():
             flash('Se agregó un nodo')
             logging.info("Se agregó un nodo")
             mysql.connection.commit()
     return redirect(url_for('index'))
-
 
 
 @app.route('/borrar_nodo/<string:id>', methods=['GET'])
@@ -149,15 +155,19 @@ def actualizar_nodo(id):
         mqtt_pass = request.form['mqtt_pass']
         mqtt_puerto = request.form['mqtt_puerto']
 
-        # Cifrar nueva contraseña
-        passhash = generate_password_hash(mqtt_pass, method='scrypt', salt_length=16)[17:]
+        # Cargar la clave Fernet, deberia de cargar desde el env
+        fernet_key = 'nZlKUqDCMQs0yK7sYpAz6GgJY0YkBeuI_dBLVgl9-Vw='
+        # Crear instancia de Fernet
+        fernet = Fernet(fernet_key.encode())
+        # Cifrar la contraseña
+        encrypted_pass = fernet.encrypt(mqtt_pass.encode()).decode()
 
         cur = mysql.connection.cursor()
         cur.execute("""
             UPDATE nodos
             SET nodo=%s, servidor=%s, mqtt_usr=%s, mqtt_pass=%s, mqtt_puerto=%s
             WHERE id=%s
-        """, (nodo, servidor, mqtt_usr, passhash, mqtt_puerto, id))
+        """, (nodo, servidor, mqtt_usr, encrypted_pass, mqtt_puerto, id))
     if mysql.connection.affected_rows():
         flash('Se actualizó el nodo')
         logging.info("Se actualizó el nodo")
