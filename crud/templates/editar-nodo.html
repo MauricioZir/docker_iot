@@ -1,23 +1,37 @@
 {% extends "layout.html" %}
 {% block body %}
 
-<form action="{{ url_for('actualizar_nodo', id=nodo.0) }}" method="POST">
-  <label for="nodo">Nodo</label>
-  <input type="text" name="nodo" id="nodo" value="{{ nodo.1 }}" required />
+<div class="container pt-5">
+  <h2>Editar Nodo</h2>
+  <form action="{{ url_for('actualizar_nodo', id=nodo.0) }}" method="POST">
+    <div class="mb-3">
+      <label for="nodo" class="form-label">Nodo</label>
+      <input type="text" class="form-control" name="nodo" id="nodo" value="{{ nodo.1 }}" required />
+    </div>
 
-  <label for="servidor">Servidor</label>
-  <input type="text" name="servidor" id="servidor" value="{{ nodo.2 }}" required />
+    <div class="mb-3">
+      <label for="servidor" class="form-label">Servidor</label>
+      <input type="text" class="form-control" name="servidor" id="servidor" value="{{ nodo.2 }}" required />
+    </div>
 
-  <label for="mqtt_usr">MQTT Usuario</label>
-  <input type="text" name="mqtt_usr" id="mqtt_usr" value="{{ nodo.3 }}" required />
+    <div class="mb-3">
+      <label for="mqtt_usr" class="form-label">MQTT Usuario</label>
+      <input type="text" class="form-control" name="mqtt_usr" id="mqtt_usr" value="{{ nodo.3 }}" required />
+    </div>
 
-  <label for="mqtt_pass">MQTT Password</label>
-  <input type="password" name="mqtt_pass" id="mqtt_pass" placeholder="Nueva contraseña o la misma" required />
+    <div class="mb-3">
+      <label for="mqtt_pass" class="form-label">MQTT Password</label>
+      <input type="password" class="form-control" name="mqtt_pass" id="mqtt_pass" placeholder="Nueva contraseña o la misma" required />
+    </div>
 
-  <label for="mqtt_puerto">MQTT Puerto</label>
-  <input type="number" name="mqtt_puerto" id="mqtt_puerto" value="{{ nodo.5 }}" required />
+    <div class="mb-3">
+      <label for="mqtt_puerto" class="form-label">MQTT Puerto</label>
+      <input type="number" class="form-control" name="mqtt_puerto" id="mqtt_puerto" value="{{ nodo.5 }}" required />
+    </div>
 
-  <button type="submit">Actualizar Nodo</button>
-</form>
+    <button type="submit" class="btn btn-primary">Actualizar Nodo</button>
+    <a href="{{ url_for('index') }}" class="btn btn-secondary ms-2">Cancelar</a>
+  </form>
+</div>
 
 {% endblock %}

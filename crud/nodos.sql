@@ -3,7 +3,7 @@ CREATE TABLE `nodos` (
   `nodo` VARCHAR(50) NOT NULL,
   `servidor` VARCHAR(100) NOT NULL,
   `mqtt_usr` VARCHAR(100) NOT NULL,
-  `mqtt_pass` VARCHAR(150) NOT NULL,
+  `mqtt_pass` VARCHAR(255) NOT NULL,
   `mqtt_puerto` INT NOT NULL,
   PRIMARY KEY (`id`),
   CHECK (`mqtt_puerto` BETWEEN 1 AND 65535)

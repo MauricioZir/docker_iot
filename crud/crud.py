@@ -86,9 +86,9 @@ def login():
 def index():
     cur = mysql.connection.cursor()
     cur.execute("SELECT * FROM nodos")
-    nodos = cur.fetchall()
+    datos = cur.fetchall()
     cur.close()
-    return render_template('index.html', nodos = nodos)
+    return render_template('index.html', nodos = datos)
 
 
 @app.route('/add_nodo', methods=['POST'])
@@ -115,6 +115,7 @@ def add_nodo():
             logging.info("Se agregó un nodo")
             mysql.connection.commit()
     return redirect(url_for('index'))
+
 
 
 @app.route('/borrar_nodo/<string:id>', methods=['GET'])
