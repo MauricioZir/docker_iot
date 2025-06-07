@@ -183,6 +183,7 @@ def logout():
     return redirect(url_for('index'))
 
 
+#Maneja la conexión y la publicación hacia el servidor MQTT
 @app.route('/publicar', methods=['GET', 'POST'])
 @require_login
 def publicar():
@@ -193,6 +194,10 @@ def publicar():
     if request.method == 'POST':
         nodo_id = request.form['nodo']
         accion = request.form['accion']
+        #Procesamos el tópico por si viene con espacios o una barra al final
+        topic_base = request.form.get('topic_base', '').strip().rstrip('/')
+        topic_base = topic_base.replace(" ", "_")
+
         cur.execute("SELECT * FROM nodos WHERE id = %s", (nodo_id,))
         nodo_data = cur.fetchone()
 
@@ -218,15 +223,17 @@ def publicar():
                 client.username_pw_set(usuario, mqtt_pass)
             client.connect(servidor, int(puerto), 60)
 
-
             if accion == 'destello':
-                client.publish("comandos/destello", "destello")
-                flash("Comando 'destello' enviado al nodo.")
+                topic = f"{topic_base}/destello" if topic_base else "Default/destello"
+                client.publish(topic, "destello")
+                flash(f"Comando 'destello' enviado al tópico '{topic}'")
+
             elif accion == 'setpoint':
                 setpoint = request.form.get("setpoint")
                 if setpoint and setpoint.isdigit():
-                    client.publish("comandos/setpoint", setpoint)
-                    flash(f"Setpoint enviado al nodo: {setpoint}")
+                    topic = f"{topic_base}/setpoint" if topic_base else "Default/setpoint"
+                    client.publish(topic, setpoint)
+                    flash(f"Setpoint enviado al tópico '{topic}': {setpoint}")
                 else:
                     flash("Setpoint inválido.", "danger")
 
