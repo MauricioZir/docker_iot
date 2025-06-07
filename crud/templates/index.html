@@ -1,6 +1,11 @@
 {% extends "layout.html" %}
 {% block body %}
 
+<div class="row mb-5">
+  <div class="col-md-7 mx-auto">
+    <a href="{{ url_for('publicar') }}" class="btn btn-success w-100">Publicar</a>
+  </div>
+</div>
 
 <div class="row">
   <div class="col-md-7 mx-auto">
@@ -21,12 +26,12 @@
 
       <div class="form-group">
         <label class="col-form-label mt-4" for="mqtt_usr">Usuario MQTT</label>
-        <input type="text" class="form-control" id="mqtt_usr" name="mqtt_usr" required>
+        <input type="text" class="form-control" id="mqtt_usr" name="mqtt_usr">
       </div>
 
       <div class="form-group">
         <label class="col-form-label mt-4" for="mqtt_pass">Contraseña MQTT</label>
-        <input type="password" class="form-control" id="mqtt_pass" name="mqtt_pass" required>
+        <input type="password" class="form-control" id="mqtt_pass" name="mqtt_pass">
       </div>
 
       <div class="form-group">

@@ -5,6 +5,8 @@ from functools import wraps
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
 from cryptography.fernet import Fernet
+import paho.mqtt.client as mqtt
+import ssl, certifi
 
 logging.basicConfig(format='%(asctime)s - CRUD - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -92,8 +94,6 @@ def index():
     return render_template('index.html', nodos = datos)
 
 
-
-
 @app.route('/add_nodo', methods=['POST'])
 @require_login
 def add_nodo():
@@ -104,8 +104,8 @@ def add_nodo():
         mqtt_pass = request.form['mqtt_pass']
         mqtt_puerto = request.form['mqtt_puerto']
 
-        # Cargar la clave Fernet, deberia de cargar desde el env
-        fernet_key = 'nZlKUqDCMQs0yK7sYpAz6GgJY0YkBeuI_dBLVgl9-Vw='
+        # Cargar la clave Fernet desde el env
+        fernet_key = os.environ["FERNET_KEY"]
         # Crear instancia de Fernet
         fernet = Fernet(fernet_key.encode())
         # Cifrar la contraseña
@@ -155,8 +155,8 @@ def actualizar_nodo(id):
         mqtt_pass = request.form['mqtt_pass']
         mqtt_puerto = request.form['mqtt_puerto']
 
-        # Cargar la clave Fernet, deberia de cargar desde el env
-        fernet_key = 'nZlKUqDCMQs0yK7sYpAz6GgJY0YkBeuI_dBLVgl9-Vw='
+        # Cargar la clave Fernet desde el env
+        fernet_key = os.environ["FERNET_KEY"]
         # Crear instancia de Fernet
         fernet = Fernet(fernet_key.encode())
         # Cifrar la contraseña
@@ -181,3 +181,60 @@ def logout():
     session.clear()
     logging.info("el usuario {} cerró su sesión".format(session.get("user_id")))
     return redirect(url_for('index'))
+
+
+@app.route('/publicar', methods=['GET', 'POST'])
+@require_login
+def publicar():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT id, nodo FROM nodos")
+    nodos = cur.fetchall()
+
+    if request.method == 'POST':
+        nodo_id = request.form['nodo']
+        accion = request.form['accion']
+        cur.execute("SELECT * FROM nodos WHERE id = %s", (nodo_id,))
+        nodo_data = cur.fetchone()
+
+        if nodo_data:
+            servidor = nodo_data[2]
+            usuario = nodo_data[3]
+            encrypted_pass = nodo_data[4]
+            puerto = nodo_data[5]
+
+            # Desencriptar contraseña
+            fernet_key = os.environ["FERNET_KEY"]
+            fernet = Fernet(fernet_key.encode())
+            mqtt_pass = fernet.decrypt(encrypted_pass.encode()).decode()
+
+            tls_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            tls_context.verify_mode = ssl.CERT_REQUIRED
+            tls_context.check_hostname = True
+            tls_context.load_default_certs()
+
+            client = mqtt.Client()
+            client.tls_set_context(tls_context)
+            if usuario and mqtt_pass:
+                client.username_pw_set(usuario, mqtt_pass)
+            client.connect(servidor, int(puerto), 60)
+
+
+            if accion == 'destello':
+                client.publish("comandos/destello", "destello")
+                flash("Comando 'destello' enviado al nodo.")
+            elif accion == 'setpoint':
+                setpoint = request.form.get("setpoint")
+                if setpoint and setpoint.isdigit():
+                    client.publish("comandos/setpoint", setpoint)
+                    flash(f"Setpoint enviado al nodo: {setpoint}")
+                else:
+                    flash("Setpoint inválido.", "danger")
+
+            client.disconnect()
+        else:
+            flash("Nodo no encontrado.", "danger")
+        
+        return redirect(url_for('publicar', selected_id=nodo_id))
+
+    selected_id = request.args.get('selected_id', type=int)
+    return render_template('publicar.html', nodos=nodos, selected_id=selected_id)
